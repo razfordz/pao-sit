@@ -24,6 +24,77 @@ The platform should NOT feel:
 - cyberpunk or futuristic
 
 ---
+## Product Positioning Direction
+
+The product positioning has evolved from a simple welfare search platform into a proactive AI civic assistant.
+
+Core narrative:
+“กรุงเทพรู้ใจคุณ”
+“A city that understands you before you have to search for help yourself.”
+
+The platform should communicate:
+- proactive assistance
+- personalized civic support
+- AI-powered benefit matching
+- human-centered government experience
+
+Avoid positioning the platform as:
+- a search engine
+- a directory of benefits
+- a traditional government portal
+- a static information dashboard
+
+Instead, the experience should feel like:
+- the city understands your life situation
+- AI helps discover benefits automatically
+- support comes to citizens proactively
+- government services become personalized
+
+Landing page messaging should emphasize:
+- “เมืองที่เข้าใจคุณ ก่อนที่คุณจะต้องค้นหาเอง”
+- “สิทธิ์ที่ควรได้ ไม่ควรต้องหาเอง”
+- “AI ช่วยจับคู่สิทธิ์ บริการ และโอกาสที่เหมาะกับชีวิตคุณ”
+
+The emotional direction should feel:
+- hopeful
+- caring
+- intelligent
+- trustworthy
+- empowering
+
+The UX should create the feeling that:
+“Bangkok understands me.”
+instead of:
+“I have to figure everything out myself.”
+
+---
+
+## Landing Page UX Direction
+
+The landing page should immediately communicate:
+1. Emotional empathy
+2. Personalized AI assistance
+3. Proactive government experience
+4. Simplicity and accessibility
+
+The hero section should feel:
+- premium
+- calm
+- cinematic
+- modern civic-tech
+- emotionally resonant
+
+Avoid:
+- generic startup copy
+- overly technical AI wording
+- bureaucratic messaging
+- dense paragraphs
+- dashboard-heavy layouts
+
+The landing page should visually and emotionally resemble:
+- an Apple-style product introduction
+- a human-centered AI assistant
+- a next-generation civic platform
 
 ## Design Direction
 
