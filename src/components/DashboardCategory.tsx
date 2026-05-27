@@ -7,6 +7,8 @@ export type DashboardBenefit = {
   description: string
   icon: ReactNode
   accentClass: string
+  matchScore?: number
+  reason?: string
 }
 
 type DashboardCategoryProps = {
@@ -19,7 +21,7 @@ function DashboardCategory({ title, benefits }: DashboardCategoryProps) {
     <section className="relative z-10">
       <div className="px-1.5">
         <p className="text-[11px] font-extrabold leading-none text-[#178E8A]/70">
-          แนะนำสำหรับคุณ
+          แนะนำจากข้อมูลของคุณ
         </p>
         <h3 className="headline-font mt-2 text-[21px] font-extrabold leading-none text-[#123B3B]">
           {title}
@@ -34,6 +36,8 @@ function DashboardCategory({ title, benefits }: DashboardCategoryProps) {
             description={benefit.description}
             icon={benefit.icon}
             accentClass={benefit.accentClass}
+            matchScore={benefit.matchScore}
+            reason={benefit.reason}
           />
         ))}
       </div>

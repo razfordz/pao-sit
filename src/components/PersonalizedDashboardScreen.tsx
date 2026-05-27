@@ -3,6 +3,9 @@ import DashboardCategory, {
 } from "./DashboardCategory"
 import DashboardHeroCard from "./DashboardHeroCard"
 import AIAssistantPanel from "./AIAssistantPanel"
+import { benefits } from "../data/benefits"
+import { userProfile } from "../data/userProfile"
+import { matchBenefits, type MatchedBenefit } from "../lib/matchBenefits"
 
 type DashboardCategoryData = {
   id: string
@@ -10,70 +13,12 @@ type DashboardCategoryData = {
   benefits: DashboardBenefit[]
 }
 
-const dashboardCategories: DashboardCategoryData[] = [
-  {
-    id: "welfare",
-    title: "สวัสดิการ",
-    benefits: [
-      {
-        id: "child-support",
-        title: "เงินอุดหนุนเด็ก",
-        description: "สมัครได้ทันที",
-        icon: <ChildIcon />,
-        accentClass: "bg-[#E9FBF8] text-[#168B84]",
-      },
-      {
-        id: "elderly-allowance",
-        title: "เบี้ยผู้สูงอายุ",
-        description: "ช่วยดูแลคนในบ้าน",
-        icon: <HomeCareIcon />,
-        accentClass: "bg-[#FFF4DC] text-[#B87512]",
-      },
-    ],
-  },
-  {
-    id: "health",
-    title: "สุขภาพ",
-    benefits: [
-      {
-        id: "health-check",
-        title: "ตรวจสุขภาพฟรี",
-        description: "ตรวจฟรีประจำปี",
-        icon: <HealthIcon />,
-        accentClass: "bg-[#E9F7FF] text-[#2279A8]",
-      },
-      {
-        id: "dental-care",
-        title: "สิทธิ์ทำฟัน",
-        description: "ใช้สิทธิ์ใกล้บ้าน",
-        icon: <DentalIcon />,
-        accentClass: "bg-[#F1F0FF] text-[#6660C8]",
-      },
-    ],
-  },
-  {
-    id: "opportunity",
-    title: "โอกาส",
-    benefits: [
-      {
-        id: "free-ai-course",
-        title: "คอร์ส AI ฟรี",
-        description: "เรียนออนไลน์ฟรี",
-        icon: <LearningIcon />,
-        accentClass: "bg-[#EAFBF1] text-[#23875A]",
-      },
-      {
-        id: "career-training",
-        title: "ทุนอบรมอาชีพ",
-        description: "ต่อยอดงานใหม่",
-        icon: <CareerIcon />,
-        accentClass: "bg-[#FFF0EA] text-[#C46335]",
-      },
-    ],
-  },
-]
+const categoryOrder = ["สวัสดิการ", "สุขภาพ", "โอกาส"]
 
 function PersonalizedDashboardScreen() {
+  const matchedBenefits = matchBenefits(userProfile, benefits)
+  const dashboardCategories = groupBenefitsByCategory(matchedBenefits)
+
   return (
     <div className="relative h-[548px] animate-[screen-in_420ms_ease-out_both] overflow-hidden rounded-[32px] bg-gradient-to-br from-[#FBFFFF] via-[#EFFBFA] to-[#DCF5FF] shadow-[0_24px_70px_rgba(21,140,132,0.16)] sm:h-[566px] sm:rounded-[34px]">
       <div className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full bg-[#7DE8FF]/24 blur-3xl" />
@@ -84,18 +29,116 @@ function PersonalizedDashboardScreen() {
       <div className="dashboard-scroll relative h-full overflow-y-auto overflow-x-hidden overscroll-contain px-4 pb-24 pt-5 sm:px-5">
         <DashboardHeroCard />
 
-        <div className="mt-11 flex flex-col gap-9 pb-2">
-          {dashboardCategories.map((category) => (
-            <DashboardCategory
-              key={category.id}
-              title={category.title}
-              benefits={category.benefits}
-            />
-          ))}
-        </div>
+        {dashboardCategories.length > 0 ? (
+          <div className="mt-11 flex flex-col gap-9 pb-2">
+            {dashboardCategories.map((category) => (
+              <DashboardCategory
+                key={category.id}
+                title={category.title}
+                benefits={category.benefits}
+              />
+            ))}
+          </div>
+        ) : (
+          <EmptyMatchedBenefits />
+        )}
       </div>
 
       <AIAssistantPanel />
+    </div>
+  )
+}
+
+function groupBenefitsByCategory(
+  matchedBenefits: MatchedBenefit<(typeof benefits)[number]>[],
+): DashboardCategoryData[] {
+  const benefitsByCategory = new Map<string, DashboardBenefit[]>()
+
+  matchedBenefits.map((benefit) => {
+    const categoryBenefits = benefitsByCategory.get(benefit.category) ?? []
+
+    benefitsByCategory.set(benefit.category, [
+      ...categoryBenefits,
+      toDashboardBenefit(benefit),
+    ])
+  })
+
+  return categoryOrder
+    .map((category) => ({
+      id: category,
+      title: category,
+      benefits: benefitsByCategory.get(category) ?? [],
+    }))
+    .filter((category) => category.benefits.length > 0)
+}
+
+function toDashboardBenefit(
+  benefit: MatchedBenefit<(typeof benefits)[number]>,
+): DashboardBenefit {
+  return {
+    id: benefit.id,
+    title: benefit.title,
+    description: benefit.amount ?? "เหมาะกับโปรไฟล์ของคุณ",
+    reason: benefit.reason,
+    matchScore: benefit.matchScore,
+    icon: getBenefitIcon(benefit),
+    accentClass: getBenefitAccentClass(benefit),
+  }
+}
+
+function getBenefitIcon(benefit: MatchedBenefit<(typeof benefits)[number]>) {
+  if (benefit.tags.includes("hasChild")) {
+    return <ChildIcon />
+  }
+
+  if (benefit.tags.includes("elderly")) {
+    return <HomeCareIcon />
+  }
+
+  if (benefit.tags.includes("healthSupport")) {
+    return <HealthIcon />
+  }
+
+  if (benefit.tags.includes("lookingForJob")) {
+    return <CareerIcon />
+  }
+
+  if (benefit.category === "โอกาส") {
+    return <LearningIcon />
+  }
+
+  if (benefit.category === "สุขภาพ") {
+    return <DentalIcon />
+  }
+
+  return <CareerIcon />
+}
+
+function getBenefitAccentClass(benefit: MatchedBenefit<(typeof benefits)[number]>) {
+  if (benefit.category === "สุขภาพ") {
+    return "bg-[#E9F7FF] text-[#2279A8]"
+  }
+
+  if (benefit.category === "โอกาส") {
+    return "bg-[#EAFBF1] text-[#23875A]"
+  }
+
+  if (benefit.tags.includes("hasChild")) {
+    return "bg-[#E9FBF8] text-[#168B84]"
+  }
+
+  return "bg-[#FFF4DC] text-[#B87512]"
+}
+
+function EmptyMatchedBenefits() {
+  return (
+    <div className="relative z-10 mt-11 rounded-[28px] border border-white/84 bg-white/68 p-6 text-center shadow-[0_18px_42px_rgba(18,59,59,0.08)] backdrop-blur-xl">
+      <p className="headline-font text-[21px] font-extrabold leading-tight text-[#123B3B]">
+        ยังไม่พบสิทธิ์ที่ตรงกับโปรไฟล์นี้
+      </p>
+      <p className="mt-3 text-[13.5px] font-bold leading-[1.65] text-[#5D7778]">
+        ลองเพิ่มข้อมูลเพิ่มเติมเพื่อให้ AI แนะนำได้แม่นยำขึ้น
+      </p>
     </div>
   )
 }
