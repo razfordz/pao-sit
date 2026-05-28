@@ -1,4 +1,7 @@
 import { useEffect, useState } from "react"
+import type { DistrictOffice } from "../data/districtOffices"
+import { userProfile } from "../data/userProfile"
+import { getDistrictOfficeByDistrict } from "../lib/getDistrictOffice"
 import type { DashboardBenefit } from "./DashboardCategory"
 
 type BenefitApplicationFlowScreenProps = {
@@ -6,70 +9,126 @@ type BenefitApplicationFlowScreenProps = {
   onBack: () => void
 }
 
-const applicationSteps = [
-  {
-    title: "ไปที่สำนักงานเขตบางกะปิ",
-    description: "AI เลือกจุดบริการใกล้คุณที่สุดจากที่อยู่ในกรุงเทพ",
-  },
-  {
-    title: "ยื่นเอกสารให้เจ้าหน้าที่ตรวจสอบ",
-    description: "แจ้งชื่อสิทธิ์นี้ แล้วให้เจ้าหน้าที่ช่วยตรวจเอกสารที่เตรียมไว้",
-  },
-  {
-    title: "รอผลการพิจารณา",
-    description: "ติดตามผลผ่าน SMS หรือช่องทางที่เจ้าหน้าที่แจ้งไว้",
-  },
-]
+type OfficeDisplayData = Pick<
+  DistrictOffice,
+  | "name"
+  | "address"
+  | "phone"
+  | "openHours"
+  | "recommendedTime"
+  | "availableServices"
+  | "googleMapsUrl"
+>
 
-const applicationChannels = [
-  {
-    title: "สมัครออนไลน์",
-    description: "เหมาะสำหรับสมัครทันทีผ่านเว็บไซต์",
-    detail: "เริ่มได้ทันที",
-    loadingText: "ระบบกำลังพาคุณไปยังเว็บไซต์หน่วยงาน",
-    readyText: "พร้อมเปิดเว็บไซต์สมัครออนไลน์",
-    recommended: true,
-  },
-  {
-    title: "สำนักงานเขตบางกะปิ",
-    description: "เหมาะสำหรับผู้ที่ต้องการให้เจ้าหน้าที่ช่วยตรวจเอกสาร",
-    detail: "2.1 กม. • เปิด 08:30-16:30",
-    loadingText: "ระบบกำลังเตรียมข้อมูลการเดินทางไปสำนักงานเขต",
-    readyText: "พร้อมเปิดข้อมูลสำนักงานเขต",
-    recommended: false,
-  },
-  {
-    title: "โทรสอบถามหน่วยงาน",
-    description: "สอบถามข้อมูลเพิ่มเติมก่อนสมัคร",
-    detail: "เช็กเอกสารก่อนออกจากบ้าน",
-    loadingText: "ระบบกำลังเตรียมช่องทางติดต่อหน่วยงาน",
-    readyText: "พร้อมติดต่อหน่วยงาน",
-    recommended: false,
-  },
-]
+const defaultDistrictOffice: OfficeDisplayData = {
+  name: "ยังไม่พบสำนักงานเขตที่ตรงกับพื้นที่ของคุณ",
+  address: "ระบบจะแนะนำสำนักงานเขตให้เมื่อมีข้อมูลพื้นที่เพิ่มเติม",
+  phone: "ยังไม่มีข้อมูลเบอร์โทร",
+  openHours: "ยังไม่มีข้อมูลเวลาเปิดทำการ",
+  recommendedTime: "AI จะแนะนำช่วงเวลาที่เหมาะสมเมื่อพบสำนักงานเขต",
+  availableServices: [] as string[],
+  googleMapsUrl: "",
+}
 
-const smartTips = [
-  "AI พบว่าสำนักงานเขตใกล้คุณมีคิวสั้นช่วง 09:00-10:00",
-  "ควรเตรียมสำเนาเอกสารเพิ่มไว้ 1 ชุด",
-  "คุณสามารถเริ่มสมัครออนไลน์ได้บางส่วนโดยไม่ต้องเดินทางทันที",
-]
+type ApplicationChannel = {
+  action: "online" | "office" | "phone"
+  title: string
+  description: string
+  detail: string
+  loadingText: string
+  readyText: string
+  recommended: boolean
+  mapsUrl?: string
+}
 
-const districtOffice = {
-  name: "สำนักงานเขตบางกะปิ",
-  distance: "2.1 กม.",
-  hours: "เปิด 08:30-16:30",
-  waitTime: "คาดว่ารอประมาณ 20 นาที",
-  suggestedTime: "แนะนำให้ไปช่วง 09:00",
+const onlineApplicationChannel: ApplicationChannel = {
+  action: "online",
+  title: "สมัครออนไลน์",
+  description: "เหมาะสำหรับสมัครทันทีผ่านเว็บไซต์",
+  detail: "เริ่มได้ทันที",
+  loadingText: "กำลังเปิดช่องทางสมัครออนไลน์...",
+  readyText: "พร้อมเปิดเว็บไซต์สมัครออนไลน์",
+  recommended: true,
+}
+
+function getApplicationSteps(officeName: string) {
+  return [
+    {
+      title: `ไปที่${officeName}`,
+      description: `AI พบว่าสำนักงานเขตใกล้คุณคือ${officeName}`,
+    },
+    {
+      title: "ยื่นเอกสารให้เจ้าหน้าที่ตรวจสอบ",
+      description:
+        "แจ้งชื่อสิทธิ์นี้ แล้วให้เจ้าหน้าที่ช่วยตรวจเอกสารที่เตรียมไว้",
+    },
+    {
+      title: "รอผลการพิจารณา",
+      description: "ติดตามผลผ่าน SMS หรือช่องทางที่เจ้าหน้าที่แจ้งไว้",
+    },
+  ]
+}
+
+function getApplicationChannels(
+  districtOffice: OfficeDisplayData,
+): ApplicationChannel[] {
+  return [
+    onlineApplicationChannel,
+    {
+      action: "office",
+      title: districtOffice.name,
+      description: "เหมาะสำหรับผู้ที่ต้องการให้เจ้าหน้าที่ช่วยตรวจเอกสาร",
+      detail: districtOffice.openHours,
+      loadingText: "ระบบกำลังเตรียมข้อมูลการเดินทางไปสำนักงานเขต",
+      readyText: "พร้อมเปิดข้อมูลสำนักงานเขต",
+      recommended: false,
+      mapsUrl: districtOffice.googleMapsUrl,
+    },
+    {
+      action: "phone",
+      title: "โทรสอบถามหน่วยงาน",
+      description: "สอบถามข้อมูลเพิ่มเติมก่อนสมัคร",
+      detail: districtOffice.phone,
+      loadingText: "ระบบกำลังเตรียมช่องทางติดต่อหน่วยงาน",
+      readyText: "พร้อมติดต่อหน่วยงาน",
+      recommended: false,
+    },
+  ]
+}
+
+function getSmartTips(districtOffice: OfficeDisplayData) {
+  return [
+    districtOffice.recommendedTime ??
+      "AI จะแนะนำช่วงเวลาที่เหมาะสมเมื่อพบข้อมูลสำนักงานเขต",
+    "ควรเตรียมสำเนาเอกสารเพิ่มไว้ 1 ชุด",
+    districtOffice.availableServices.length > 0
+      ? `${districtOffice.name}รองรับบริการ: ${districtOffice.availableServices
+          .slice(0, 3)
+          .join(", ")}`
+      : "คุณสามารถเริ่มสมัครออนไลน์ได้บางส่วนโดยไม่ต้องเดินทางทันที",
+  ]
+}
+
+function hasUsablePhone(phone: string) {
+  return phone.trim().length > 0 && !phone.startsWith("ยังไม่มี")
 }
 
 function BenefitApplicationFlowScreen({
   benefit,
   onBack,
 }: BenefitApplicationFlowScreenProps) {
+  const matchedDistrictOffice = getDistrictOfficeByDistrict(userProfile.district)
+  const districtOffice: OfficeDisplayData =
+    matchedDistrictOffice ?? defaultDistrictOffice
+  const applicationSteps = getApplicationSteps(
+    matchedDistrictOffice ? districtOffice.name : "สำนักงานเขตที่เหมาะสม",
+  )
+  const applicationChannels = getApplicationChannels(districtOffice)
+  const smartTips = getSmartTips(districtOffice)
   const [isChannelSheetOpen, setIsChannelSheetOpen] = useState(false)
-  const [selectedChannel, setSelectedChannel] = useState<
-    (typeof applicationChannels)[number] | null
-  >(null)
+  const [isOfficeDetailOpen, setIsOfficeDetailOpen] = useState(false)
+  const [selectedChannel, setSelectedChannel] =
+    useState<ApplicationChannel | null>(null)
   const [channelStatus, setChannelStatus] = useState<
     "idle" | "loading" | "ready"
   >("idle")
@@ -88,19 +147,54 @@ function BenefitApplicationFlowScreen({
 
   const openChannelSheet = () => {
     setIsChannelSheetOpen(true)
+    setIsOfficeDetailOpen(false)
     setSelectedChannel(null)
     setChannelStatus("idle")
   }
 
   const closeChannelSheet = () => {
     setIsChannelSheetOpen(false)
+    setIsOfficeDetailOpen(false)
     setSelectedChannel(null)
     setChannelStatus("idle")
   }
 
-  const chooseChannel = (channel: (typeof applicationChannels)[number]) => {
+  const chooseChannel = (channel: ApplicationChannel) => {
+    setIsOfficeDetailOpen(false)
     setSelectedChannel(channel)
+
+    if (channel.action === "office") {
+      setChannelStatus("idle")
+      setIsOfficeDetailOpen(true)
+      return
+    }
+
+    if (channel.action === "phone") {
+      if (hasUsablePhone(districtOffice.phone)) {
+        // Required for native phone handoff in this prototype flow.
+        // eslint-disable-next-line react-hooks/immutability
+        window.location.href = `tel:${districtOffice.phone}`
+        setChannelStatus("ready")
+        return
+      }
+
+      setSelectedChannel({
+        ...channel,
+        readyText: "ยังไม่มีเบอร์ติดต่อสำหรับสำนักงานเขตนี้",
+      })
+      setChannelStatus("ready")
+      return
+    }
+
     setChannelStatus("loading")
+  }
+
+  const openGoogleMaps = () => {
+    if (!districtOffice.googleMapsUrl) {
+      return
+    }
+
+    window.open(districtOffice.googleMapsUrl, "_blank", "noopener,noreferrer")
   }
 
   return (
@@ -174,14 +268,37 @@ function BenefitApplicationFlowScreen({
                     {districtOffice.name}
                   </h2>
                 </div>
-                <span className="shrink-0 rounded-full bg-[#19A79D]/12 px-2.5 py-1.5 text-[11px] font-extrabold leading-none text-[#12877F]">
-                  {districtOffice.distance}
-                </span>
+                {matchedDistrictOffice && (
+                  <span className="shrink-0 rounded-full bg-[#19A79D]/12 px-2.5 py-1.5 text-[11px] font-extrabold leading-none text-[#12877F]">
+                    เขต{matchedDistrictOffice.district}
+                  </span>
+                )}
               </div>
 
-              <div className="min-w-[140px] rounded-3xl border border-teal-100 bg-white/70 p-4">
-                <ContextStat label="เวลาทำการ" value={districtOffice.hours} />
+              <p className="mt-3 text-[12px] font-medium leading-[1.6] text-[#5F7A7C]">
+                {districtOffice.address}
+              </p>
+
+              <div className="mt-3 grid grid-cols-1 gap-2">
+                <ContextStat label="เวลาทำการ" value={districtOffice.openHours} />
+                <ContextStat label="โทร" value={districtOffice.phone} />
               </div>
+
+              {districtOffice.googleMapsUrl && (
+                <button
+                  type="button"
+                  onClick={openGoogleMaps}
+                  className="mt-3 inline-flex w-full items-center justify-center gap-3 rounded-full border border-[#9BDCD7]/80 bg-white/94 px-4.5 py-3 text-[13px] font-extrabold leading-none text-[#0F6F6B] shadow-[0_14px_28px_rgba(18,59,59,0.12),0_4px_10px_rgba(25,167,157,0.08),inset_0_1px_0_rgba(255,255,255,0.95)] backdrop-blur-xl transition duration-300 hover:-translate-y-0.5 hover:border-[#7CCFCA] hover:bg-white hover:shadow-[0_18px_34px_rgba(18,59,59,0.14),0_6px_14px_rgba(25,167,157,0.1),inset_0_1px_0_rgba(255,255,255,1)] active:translate-y-0 active:scale-[0.985]"
+                >
+                  <img
+                    alt=""
+                    aria-hidden="true"
+                    className="h-9 w-9 shrink-0 object-contain"
+                    src="/images/Googlemap_Logo.png"
+                  />
+                  <span>เปิดใน Google Maps →</span>
+                </button>
+              )}
             </div>
           </div>
         </section>
@@ -194,8 +311,9 @@ function BenefitApplicationFlowScreen({
             ไปเวลานี้จะสบายกว่า
           </h2>
           <p className="mt-3 text-[13.5px] font-medium leading-[1.72] text-[#496B6D]">
-            {districtOffice.suggestedTime} เพราะคุณอยู่ใกล้จุดบริการ
-            และยังมีเวลาพอให้เจ้าหน้าที่ช่วยตรวจเอกสาร หากต้องแก้ไขเล็กน้อย
+            {matchedDistrictOffice
+              ? `${districtOffice.recommendedTime} เพราะคุณอยู่ใกล้จุดบริการ และยังมีเวลาพอให้เจ้าหน้าที่ช่วยตรวจเอกสาร หากต้องแก้ไขเล็กน้อย`
+              : "AI จะช่วยแนะนำสำนักงานเขตและช่วงเวลาที่เหมาะสม เมื่อมีข้อมูลพื้นที่ของคุณเพิ่มเติม"}
           </p>
           <div className="mt-4 rounded-[18px] border border-[#D7EEEE] bg-[#F8FFFF]/80 p-3">
             <p className="text-[12.5px] font-bold leading-[1.6] text-[#315F61]">
@@ -215,20 +333,6 @@ function BenefitApplicationFlowScreen({
                 description={step.description}
                 index={index + 1}
                 title={step.title}
-              />
-            ))}
-          </div>
-        </section>
-
-        <section className="mt-4 rounded-[28px] border border-white/82 bg-white/70 p-5 shadow-[0_18px_42px_rgba(18,59,59,0.07)] backdrop-blur-xl">
-          <SectionTitle eyebrow="ช่องทางสมัคร" title="ช่องทางสำหรับคุณ" />
-
-          <div className="mt-4 grid grid-cols-1 gap-3">
-            {applicationChannels.map((channel) => (
-              <ChannelCard
-                key={channel.title}
-                description={channel.description}
-                title={channel.title}
               />
             ))}
           </div>
@@ -292,9 +396,14 @@ function BenefitApplicationFlowScreen({
 
       {isChannelSheetOpen && (
         <ApplicationChannelsSheet
+          applicationChannels={applicationChannels}
           channelStatus={channelStatus}
+          districtOffice={districtOffice}
+          isOfficeDetailOpen={isOfficeDetailOpen}
           onChooseChannel={chooseChannel}
           onClose={closeChannelSheet}
+          onOpenGoogleMaps={openGoogleMaps}
+          onShowChannels={() => setIsOfficeDetailOpen(false)}
           selectedChannel={selectedChannel}
         />
       )}
@@ -316,15 +425,25 @@ function SectionTitle({ eyebrow, title }: { eyebrow: string; title: string }) {
 }
 
 function ApplicationChannelsSheet({
+  applicationChannels,
   channelStatus,
+  districtOffice,
+  isOfficeDetailOpen,
   onChooseChannel,
   onClose,
+  onOpenGoogleMaps,
+  onShowChannels,
   selectedChannel,
 }: {
+  applicationChannels: ApplicationChannel[]
   channelStatus: "idle" | "loading" | "ready"
-  onChooseChannel: (channel: (typeof applicationChannels)[number]) => void
+  districtOffice: OfficeDisplayData
+  isOfficeDetailOpen: boolean
+  onChooseChannel: (channel: ApplicationChannel) => void
   onClose: () => void
-  selectedChannel: (typeof applicationChannels)[number] | null
+  onOpenGoogleMaps: () => void
+  onShowChannels: () => void
+  selectedChannel: ApplicationChannel | null
 }) {
   return (
     <div className="absolute inset-0 z-30 flex items-end bg-[#0B3D3D]/18 px-3 pb-3 backdrop-blur-[2px]">
@@ -375,18 +494,26 @@ function ApplicationChannelsSheet({
             </button>
           </div>
 
-          <div className="relative mt-6 flex flex-col gap-4">
-            {applicationChannels.map((channel) => (
-              <ApplicationChannelActionCard
-                key={channel.title}
-                channel={channel}
-                isSelected={selectedChannel?.title === channel.title}
-                onChoose={() => onChooseChannel(channel)}
-              />
-            ))}
-          </div>
+          {isOfficeDetailOpen ? (
+            <DistrictOfficeDetailPanel
+              districtOffice={districtOffice}
+              onBack={onShowChannels}
+              onOpenGoogleMaps={onOpenGoogleMaps}
+            />
+          ) : (
+            <div className="relative mt-6 flex flex-col gap-4">
+              {applicationChannels.map((channel) => (
+                <ApplicationChannelActionCard
+                  key={channel.title}
+                  channel={channel}
+                  isSelected={selectedChannel?.title === channel.title}
+                  onChoose={() => onChooseChannel(channel)}
+                />
+              ))}
+            </div>
+          )}
 
-          {selectedChannel && (
+          {selectedChannel && !isOfficeDetailOpen && (
             <div className="relative mt-5 overflow-hidden rounded-[24px] border border-[#BDF9FF]/44 bg-[#F4FFFF]/72 p-4 shadow-[0_12px_26px_rgba(21,140,132,0.07),inset_0_1px_0_rgba(255,255,255,0.82)]">
               <div className="flex items-center gap-3">
                 <span
@@ -448,7 +575,7 @@ function ApplicationChannelActionCard({
   isSelected,
   onChoose,
 }: {
-  channel: (typeof applicationChannels)[number]
+  channel: ApplicationChannel
   isSelected: boolean
   onChoose: () => void
 }) {
@@ -523,6 +650,89 @@ function ApplicationChannelActionCard({
   )
 }
 
+function DistrictOfficeDetailPanel({
+  districtOffice,
+  onBack,
+  onOpenGoogleMaps,
+}: {
+  districtOffice: OfficeDisplayData
+  onBack: () => void
+  onOpenGoogleMaps: () => void
+}) {
+  return (
+    <div className="relative mt-6 rounded-[26px] border border-[#BDF9FF]/52 bg-white/72 p-4 shadow-[0_16px_34px_rgba(21,140,132,0.09),inset_0_1px_0_rgba(255,255,255,0.86)]">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-[11px] font-extrabold leading-none text-[#178E8A]/74">
+            รายละเอียดสำนักงานเขต
+          </p>
+          <h4 className="mt-2 text-[18px] font-extrabold leading-tight text-[#123B3B]">
+            {districtOffice.name}
+          </h4>
+        </div>
+
+        <button
+          type="button"
+          onClick={onBack}
+          className="shrink-0 rounded-full bg-[#E9F7F6] px-3 py-2 text-[11px] font-extrabold leading-none text-[#12877F] transition hover:bg-[#DDF3F2] active:scale-95"
+        >
+          เปลี่ยน
+        </button>
+      </div>
+
+      <p className="mt-3 text-[12.5px] font-medium leading-[1.62] text-[#5F7A7C]">
+        {districtOffice.address}
+      </p>
+
+      <div className="mt-4 grid grid-cols-1 gap-2">
+        <ContextStat label="เวลาทำการ" value={districtOffice.openHours} />
+        <ContextStat label="โทร" value={districtOffice.phone} />
+        <ContextStat
+          label="ช่วงเวลาที่แนะนำ"
+          value={
+            districtOffice.recommendedTime ??
+            "AI จะแนะนำช่วงเวลาที่เหมาะสมเมื่อมีข้อมูลเพิ่มเติม"
+          }
+        />
+      </div>
+
+      {districtOffice.availableServices.length > 0 && (
+        <div className="mt-4">
+          <p className="text-[11px] font-extrabold leading-none text-[#178E8A]/72">
+            บริการที่รองรับ
+          </p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {districtOffice.availableServices.map((service) => (
+              <span
+                key={service}
+                className="rounded-full bg-[#E9F7F6] px-3 py-1.5 text-[11px] font-bold leading-none text-[#315F61]"
+              >
+                {service}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {districtOffice.googleMapsUrl && (
+        <button
+          type="button"
+          onClick={onOpenGoogleMaps}
+          className="mt-4 inline-flex w-full items-center justify-center gap-3 rounded-full border border-[#9BDCD7]/80 bg-white/94 px-4.5 py-3 text-[13px] font-extrabold leading-none text-[#0F6F6B] shadow-[0_14px_28px_rgba(18,59,59,0.12),0_4px_10px_rgba(25,167,157,0.08),inset_0_1px_0_rgba(255,255,255,0.95)] backdrop-blur-xl transition duration-300 hover:-translate-y-0.5 hover:border-[#7CCFCA] hover:bg-white active:translate-y-0 active:scale-[0.985]"
+        >
+          <img
+            alt=""
+            aria-hidden="true"
+            className="h-7 w-7 shrink-0 object-contain"
+            src="/images/Googlemap_Logo.png"
+          />
+          <span>เปิดใน Google Maps →</span>
+        </button>
+      )}
+    </div>
+  )
+}
+
 function ContextStat({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-[16px] border border-[#E0F3F2] bg-white/64 p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.86)]">
@@ -559,46 +769,6 @@ function ApplicationStepCard({
         </p>
       </div>
     </div>
-  )
-}
-
-function ChannelCard({
-  description,
-  title,
-}: {
-  description: string
-  title: string
-}) {
-  return (
-    <button
-      type="button"
-      className="flex w-full items-center justify-between gap-3 rounded-[20px] border border-[#D7EEEE] bg-white/76 p-3.5 text-left shadow-[0_12px_26px_rgba(18,59,59,0.05),inset_0_1px_0_rgba(255,255,255,0.9)] transition hover:-translate-y-0.5 hover:bg-[#F8FFFF] active:translate-y-0 active:scale-[0.985]"
-    >
-      <span className="min-w-0">
-        <span className="block text-[13.5px] font-bold leading-snug text-[#123B3B]">
-          {title}
-        </span>
-        <span className="mt-1 block text-[12px] font-medium leading-[1.55] text-[#6B8385]">
-          {description}
-        </span>
-      </span>
-      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#E6F8F7] text-[#12877F]">
-        <svg
-          aria-hidden="true"
-          className="h-4 w-4"
-          fill="none"
-          viewBox="0 0 16 16"
-        >
-          <path
-            d="M6 3.5 10.5 8 6 12.5"
-            stroke="currentColor"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth="2"
-          />
-        </svg>
-      </span>
-    </button>
   )
 }
 

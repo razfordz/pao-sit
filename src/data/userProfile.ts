@@ -1,6 +1,7 @@
 export const userProfile = {
   age: 28,
-  location: "กรุงเทพมหานคร",
+  location: "เขตปทุมวัน กรุงเทพมหานคร",
+  district: "ปทุมวัน",
   employmentStatus: "unemployed",
   hasChild: true,
   childCount: 1,

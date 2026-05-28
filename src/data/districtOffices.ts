@@ -12,7 +12,7 @@ export type DistrictOffice = {
   googleMapsUrl: string
 }
 
-export const pathumwanOffice = {
+export const pathumwanOffice: DistrictOffice = {
   id: "pathumwan",
   district: "ปทุมวัน",
   name: "สำนักงานเขตปทุมวัน",
@@ -37,7 +37,7 @@ export const pathumwanOffice = {
     "https://maps.google.com/?q=13.7424,100.5268",
 } 
 
-export const bangrakOffice = {
+export const bangrakOffice: DistrictOffice = {
     id: "bangrak",
     district: "บางรัก",
     name: "สำนักงานเขตบางรัก",
@@ -61,7 +61,7 @@ export const bangrakOffice = {
         "https://maps.google.com/?q=13.7246,100.5201",
 }
 
-export const pomprapsattruphaiOffice = {
+export const pomprapsattruphaiOffice: DistrictOffice = {
     id: "pomprapsattruphai",
     district: "ป้อมปราบศัตรูพ่าย",
     name: "สำนักงานเขตป้อมปราบศัตรูพ่าย",
@@ -84,3 +84,9 @@ export const pomprapsattruphaiOffice = {
     googleMapsUrl:
         "https://maps.google.com/?q=13.7525,100.5119",
 }
+
+export const districtOffices: DistrictOffice[] = [
+  pathumwanOffice,
+  bangrakOffice,
+  pomprapsattruphaiOffice,
+]
