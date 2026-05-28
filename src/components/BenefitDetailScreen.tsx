@@ -489,7 +489,7 @@ function AmountDisplay({
 }) {
   if (!parts) {
     return (
-      <p className="mt-5 text-[34px] font-extrabold leading-[1.05] text-white drop-shadow-[0_4px_18px_rgba(0,0,0,0.28)]">
+      <p className="mt-5 max-w-full break-words text-[28px] font-extrabold leading-[1.16] text-white drop-shadow-[0_4px_18px_rgba(0,0,0,0.28)]">
         {amount}
       </p>
     )
@@ -498,21 +498,23 @@ function AmountDisplay({
   return (
     <div
       aria-label={amount}
-      className="mt-5 flex flex-col items-start drop-shadow-[0_4px_18px_rgba(0,0,0,0.28)]"
+      className="mt-5 flex max-w-full flex-col items-start overflow-visible drop-shadow-[0_4px_18px_rgba(0,0,0,0.28)]"
     >
       {parts.prefix && (
-        <span className="text-[13px] font-bold leading-none text-white/72">
+        <span className="max-w-full text-[12.5px] font-bold leading-[1.25] text-white/72">
           {parts.prefix}
         </span>
       )}
-      <span className="mt-1 text-[48px] font-extrabold leading-[0.98] text-white">
-        {parts.value}
-      </span>
-      {parts.suffix && (
-        <span className="mt-1 text-[16px] font-extrabold leading-none text-white/78">
-          {parts.suffix}
+      <span className="mt-1 flex max-w-full flex-wrap items-baseline gap-x-2 gap-y-1 overflow-visible">
+        <span className="whitespace-nowrap text-[40px] font-extrabold leading-[1.08] text-white">
+          {parts.value}
         </span>
-      )}
+        {parts.suffix && (
+          <span className="max-w-full break-words text-[14px] font-extrabold leading-[1.35] text-white/78">
+            {parts.suffix}
+          </span>
+        )}
+      </span>
     </div>
   )
 }
@@ -528,16 +530,19 @@ function getCompactItems(
 }
 
 function getAmountParts(description: string) {
-  const amountMatch = description.match(/^(.+?)\s*([\d,]+)\s*(.*)$/)
+  const amountMatch = description.match(/[\d,]+/)
 
   if (!amountMatch) {
     return null
   }
 
+  const amountStart = amountMatch.index ?? 0
+  const amountEnd = amountStart + amountMatch[0].length
+
   return {
-    prefix: amountMatch[1].trim(),
-    value: amountMatch[2].trim(),
-    suffix: amountMatch[3].trim(),
+    prefix: description.slice(0, amountStart).trim(),
+    value: amountMatch[0].trim(),
+    suffix: description.slice(amountEnd).trim(),
   }
 }
 
