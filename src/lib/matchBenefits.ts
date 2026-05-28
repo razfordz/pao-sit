@@ -8,15 +8,32 @@ export type UserProfile = {
   isLookingForJob?: boolean
   lowIncome?: boolean
   healthSupport?: boolean
+  financialCrisis?: boolean
+  digitalSkill?: boolean
+  careerTraining?: boolean
+  vulnerableFamily?: boolean
 }
+
+export type BenefitPriority = "high" | "medium" | "low"
 
 export type Benefit = {
   id: string
   title: string
   category: string
+  thumbnail?: string
+  subCategory?: string
+  amountSummary?: string
+  shortDescription?: string
+  eligibility?: string[]
+  requiredDocuments?: string[]
+  agency?: string
+  sourceUrl?: string
   tags: string[]
+  lifeEvents?: string[]
+  targetUsers?: string[]
   reason: string
-  priority?: number
+  priority?: number | BenefitPriority
+  nextStep?: string
 }
 
 export type MatchedBenefit<TBenefit extends Benefit = Benefit> = TBenefit & {
@@ -31,16 +48,30 @@ const importantTagMatchers: Record<
   (profile: UserProfile) => boolean
 > = {
   elderly: (profile) => Boolean(profile.age && profile.age >= 60),
+  familySupport: (profile) => Boolean(profile.hasChild || profile.childCount),
   hasChild: (profile) => Boolean(profile.hasChild || profile.childCount),
+  jobSeeking: (profile) => profile.isLookingForJob === true,
   lookingForJob: (profile) => profile.isLookingForJob === true,
+  newParent: (profile) => Boolean(profile.hasChild || profile.childCount),
   socialSecurity: (profile) => profile.socialSecurity === true,
   unemployed: (profile) => profile.employmentStatus === "unemployed",
+  vulnerableFamily: (profile) =>
+    profile.vulnerableFamily === true ||
+    Boolean((profile.hasChild || profile.childCount) && profile.lowIncome),
 }
 
 const secondaryTagMatchers: Record<
   string,
   (profile: UserProfile) => boolean
 > = {
+  careerTraining: (profile) =>
+    profile.careerTraining === true || profile.isLookingForJob === true,
+  digitalSkill: (profile) =>
+    profile.digitalSkill === true || profile.isLookingForJob === true,
+  financialCrisis: (profile) =>
+    profile.financialCrisis === true ||
+    profile.lowIncome === true ||
+    profile.employmentStatus === "unemployed",
   healthSupport: (profile) => profile.healthSupport === true,
   lowIncome: (profile) => profile.lowIncome === true,
 }
@@ -80,5 +111,28 @@ function sortByRelevance<TBenefit extends Benefit>(
     return secondBenefit.matchScore - firstBenefit.matchScore
   }
 
-  return (secondBenefit.priority ?? 0) - (firstBenefit.priority ?? 0)
+  return (
+    getPriorityScore(secondBenefit.priority) -
+    getPriorityScore(firstBenefit.priority)
+  )
+}
+
+function getPriorityScore(priority: Benefit["priority"]) {
+  if (typeof priority === "number") {
+    return priority
+  }
+
+  if (priority === "high") {
+    return 3
+  }
+
+  if (priority === "medium") {
+    return 2
+  }
+
+  if (priority === "low") {
+    return 1
+  }
+
+  return 0
 }

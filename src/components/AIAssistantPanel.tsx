@@ -94,27 +94,23 @@ function AIAssistantPanel() {
     return (
       <button
         aria-label="เปิดผู้ช่วย AI"
-        className="group absolute bottom-5 right-5 z-30 flex h-[96px] w-[96px] animate-[assistant-orb-float_6.2s_ease-in-out_infinite] items-center justify-center rounded-full text-[#0F7773] transition duration-300 hover:scale-[1.035]"
+        className="group absolute bottom-5 right-5 z-30 flex h-[54px] w-[54px] animate-[assistant-orb-float_6.2s_ease-in-out_infinite] items-center justify-center rounded-full text-[#0F7773] opacity-[0.72] transition duration-300 hover:scale-[1.035] hover:opacity-95"
         onClick={() => setIsOpen(true)}
         type="button"
       >
-        <span className="pointer-events-none absolute inset-[-18px] animate-[assistant-orb-halo_4.4s_ease-in-out_infinite] rounded-full bg-[#7DE8FF]/24 blur-2xl" />
-        <span className="pointer-events-none absolute inset-[-8px] rounded-full bg-[#19A79D]/10 blur-xl" />
-        <span className="pointer-events-none absolute inset-0 animate-[assistant-orb-breathe_4.8s_ease-in-out_infinite] rounded-full border border-white/72 bg-white/38 shadow-[0_26px_58px_rgba(18,59,59,0.2),0_12px_28px_rgba(21,140,132,0.16),inset_0_1px_0_rgba(255,255,255,0.95)] backdrop-blur-2xl" />
-        <span className="pointer-events-none absolute inset-[7px] rounded-full bg-gradient-to-br from-white via-[#EFFFFF] to-[#8DECF7] shadow-[inset_0_1px_0_rgba(255,255,255,0.96),inset_0_-12px_28px_rgba(25,167,157,0.12)]" />
-        <span className="pointer-events-none absolute inset-[15px] animate-[assistant-orb-core_5.4s_ease-in-out_infinite] rounded-full bg-[conic-gradient(from_120deg,rgba(255,255,255,0.96),rgba(189,249,255,0.95),rgba(25,167,157,0.38),rgba(255,236,190,0.42),rgba(255,255,255,0.96))] blur-[0.2px]" />
-        <span className="pointer-events-none absolute inset-[23px] rounded-full bg-white/62 shadow-[inset_0_1px_0_rgba(255,255,255,0.96)] backdrop-blur-xl" />
-        <span className="pointer-events-none absolute left-6 top-5 h-5 w-5 rounded-full bg-white/78 blur-[1px]" />
-
-        <span className="pointer-events-none absolute right-3 top-4 h-2.5 w-2.5 animate-[dashboard-particle_4.8s_ease-in-out_infinite] rounded-full bg-[#D9FBFF] shadow-[0_0_16px_rgba(125,232,255,0.82)]" />
-        <span className="pointer-events-none absolute right-10 -top-1 h-2 w-2 animate-[dashboard-particle_5.2s_ease-in-out_infinite] rounded-full bg-[#FFE9B7] shadow-[0_0_13px_rgba(255,233,183,0.72)] [animation-delay:420ms]" />
-        <span className="pointer-events-none absolute bottom-5 left-3 h-1.5 w-1.5 animate-[dashboard-particle_5.8s_ease-in-out_infinite] rounded-full bg-[#BDF9FF] shadow-[0_0_12px_rgba(189,249,255,0.78)] [animation-delay:820ms]" />
+        <span className="pointer-events-none absolute inset-[-5px] animate-[assistant-orb-halo_4.4s_ease-in-out_infinite] rounded-full bg-[#7DE8FF]/8 blur-lg" />
+        <span className="pointer-events-none absolute inset-[-2px] rounded-full bg-[#19A79D]/4 blur-md" />
+        <span className="pointer-events-none absolute inset-0 animate-[assistant-orb-breathe_4.8s_ease-in-out_infinite] rounded-full border border-white/62 bg-white/28 shadow-[0_10px_22px_rgba(18,59,59,0.09),0_4px_10px_rgba(21,140,132,0.06),inset_0_1px_0_rgba(255,255,255,0.9)] backdrop-blur-2xl" />
+        <span className="pointer-events-none absolute inset-[5px] rounded-full bg-gradient-to-br from-white via-[#F2FFFF] to-[#AEEFF5] shadow-[inset_0_1px_0_rgba(255,255,255,0.9),inset_0_-6px_14px_rgba(25,167,157,0.07)]" />
+        <span className="pointer-events-none absolute inset-[12px] animate-[assistant-orb-core_5.4s_ease-in-out_infinite] rounded-full bg-[conic-gradient(from_120deg,rgba(255,255,255,0.9),rgba(189,249,255,0.68),rgba(25,167,157,0.2),rgba(255,236,190,0.22),rgba(255,255,255,0.9))] blur-[0.2px]" />
+        <span className="pointer-events-none absolute inset-[18px] rounded-full bg-white/44 shadow-[inset_0_1px_0_rgba(255,255,255,0.9)] backdrop-blur-xl" />
+        <span className="pointer-events-none absolute left-3.5 top-3 h-2.5 w-2.5 rounded-full bg-white/48 blur-[1px]" />
 
         <span className="relative flex flex-col items-center justify-center">
-          <span className="text-[22px] font-extrabold leading-none tracking-[0] text-[#103F40] drop-shadow-[0_1px_0_rgba(255,255,255,0.72)]">
+          <span className="text-[13px] font-extrabold leading-none tracking-[0] text-[#103F40] drop-shadow-[0_1px_0_rgba(255,255,255,0.6)]">
             AI
           </span>
-          <span className="mt-1 h-1 w-7 rounded-full bg-[#19A79D]/42 shadow-[0_0_12px_rgba(25,167,157,0.5)]" />
+          <span className="mt-0.5 h-0.5 w-4 rounded-full bg-[#19A79D]/24 shadow-[0_0_5px_rgba(25,167,157,0.22)]" />
         </span>
       </button>
     )
