@@ -1,4 +1,5 @@
 import { useState } from "react"
+import BenefitApplicationFlowScreen from "./BenefitApplicationFlowScreen"
 import type { DashboardBenefit } from "./DashboardCategory"
 
 type BenefitDetailScreenProps = {
@@ -39,6 +40,7 @@ function BenefitDetailScreen({ benefit, onBack }: BenefitDetailScreenProps) {
   )
   const [checkedDocuments, setCheckedDocuments] = useState<string[]>([])
   const [previewDocument, setPreviewDocument] = useState<string | null>(null)
+  const [showApplicationFlow, setShowApplicationFlow] = useState(false)
   const amountParts = getAmountParts(benefit.description)
   const preparedCount = checkedDocuments.length
   const isDocumentReady = documents.length > 0 && preparedCount === documents.length
@@ -50,6 +52,15 @@ function BenefitDetailScreen({ benefit, onBack }: BenefitDetailScreenProps) {
       currentDocuments.includes(document)
         ? currentDocuments.filter((item) => item !== document)
         : [...currentDocuments, document],
+    )
+  }
+
+  if (showApplicationFlow) {
+    return (
+      <BenefitApplicationFlowScreen
+        benefit={benefit}
+        onBack={() => setShowApplicationFlow(false)}
+      />
     )
   }
 
@@ -224,6 +235,7 @@ function BenefitDetailScreen({ benefit, onBack }: BenefitDetailScreenProps) {
           <button
             type="button"
             disabled={!isDocumentReady}
+            onClick={() => setShowApplicationFlow(true)}
             className={`mt-5 w-full rounded-[20px] px-5 py-3.5 text-[14px] font-extrabold leading-none shadow-[0_16px_30px_rgba(18,59,59,0.14)] transition duration-300 ${
               isDocumentReady
                 ? "bg-[#123B3B] text-white hover:-translate-y-0.5 hover:bg-[#0D3030] active:translate-y-0 active:scale-[0.985]"
