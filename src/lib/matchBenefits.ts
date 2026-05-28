@@ -1,11 +1,13 @@
 export type UserProfile = {
   age?: number
   location?: string
+  district?: string
   employmentStatus?: string
   hasChild?: boolean
   childCount?: number
   socialSecurity?: boolean
   isLookingForJob?: boolean
+  disabled?: boolean
   lowIncome?: boolean
   healthSupport?: boolean
   financialCrisis?: boolean
@@ -48,9 +50,15 @@ const importantTagMatchers: Record<
   (profile: UserProfile) => boolean
 > = {
   elderly: (profile) => Boolean(profile.age && profile.age >= 60),
+  seniorCitizen: (profile) => Boolean(profile.age && profile.age >= 60),
   familySupport: (profile) => Boolean(profile.hasChild || profile.childCount),
   hasChild: (profile) => Boolean(profile.hasChild || profile.childCount),
+  incomeSupport: (profile) =>
+    profile.lowIncome === true || profile.financialCrisis === true,
   jobSeeking: (profile) => profile.isLookingForJob === true,
+  jobSeeker: (profile) =>
+    profile.isLookingForJob === true ||
+    profile.employmentStatus === "unemployed",
   lookingForJob: (profile) => profile.isLookingForJob === true,
   newParent: (profile) => Boolean(profile.hasChild || profile.childCount),
   socialSecurity: (profile) => profile.socialSecurity === true,
@@ -69,11 +77,21 @@ const secondaryTagMatchers: Record<
   digitalSkill: (profile) =>
     profile.digitalSkill === true || profile.isLookingForJob === true,
   financialCrisis: (profile) =>
+    profile.financialCrisis === true || profile.lowIncome === true,
+  financialSupport: (profile) =>
     profile.financialCrisis === true ||
     profile.lowIncome === true ||
-    profile.employmentStatus === "unemployed",
+    profile.employmentStatus === "unemployed" ||
+    Boolean(profile.hasChild || profile.childCount),
   healthSupport: (profile) => profile.healthSupport === true,
   lowIncome: (profile) => profile.lowIncome === true,
+  transportSupport: (profile) =>
+    Boolean(profile.age && profile.age >= 60) ||
+    profile.disabled === true ||
+    profile.lowIncome === true,
+  worker: (profile) =>
+    profile.socialSecurity === true || profile.employmentStatus === "employed",
+  disabled: (profile) => profile.disabled === true,
 }
 
 export function matchBenefits<TBenefit extends Benefit>(

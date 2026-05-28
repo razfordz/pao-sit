@@ -43,25 +43,27 @@ function BenefitCard({
           <span>คุณอาจมีสิทธิ์ได้รับความช่วยเหลือ</span>
         </span>
 
-        <span className="mt-5 flex flex-col items-start text-white/98 drop-shadow-[0_3px_14px_rgba(0,0,0,0.26)]">
+        <span className="mt-5 flex max-w-full flex-col items-start overflow-visible text-white/98 drop-shadow-[0_3px_14px_rgba(0,0,0,0.26)]">
           {amountParts ? (
             <>
               {amountParts.prefix && (
-                <span className="whitespace-nowrap text-[13px] font-bold leading-none text-white/72">
+                <span className="max-w-full text-[12.5px] font-bold leading-[1.25] text-white/72">
                   {amountParts.prefix}
                 </span>
               )}
-              <span className="mt-1 whitespace-nowrap text-[44px] font-extrabold leading-[0.98] tracking-[0] text-white drop-shadow-[0_4px_18px_rgba(0,0,0,0.28)]">
-                {amountParts.value}
-              </span>
-              {amountParts.suffix && (
-                <span className="mt-1 whitespace-nowrap text-[15px] font-extrabold leading-none text-white/78">
-                  {amountParts.suffix}
+              <span className="mt-1 flex max-w-full flex-wrap items-baseline gap-x-2 gap-y-1 overflow-visible">
+                <span className="whitespace-nowrap text-[40px] font-extrabold leading-[1.08] tracking-[0] text-white drop-shadow-[0_4px_18px_rgba(0,0,0,0.28)]">
+                  {amountParts.value}
                 </span>
-              )}
+                {amountParts.suffix && (
+                  <span className="max-w-full break-words text-[14px] font-extrabold leading-[1.35] text-white/78">
+                    {amountParts.suffix}
+                  </span>
+                )}
+              </span>
             </>
           ) : (
-            <span className="text-[32px] font-extrabold leading-[1.08] tracking-[0] text-white drop-shadow-[0_4px_18px_rgba(0,0,0,0.28)]">
+            <span className="max-w-full break-words text-[26px] font-extrabold leading-[1.18] tracking-[0] text-white drop-shadow-[0_4px_18px_rgba(0,0,0,0.28)]">
               {description}
             </span>
           )}
@@ -84,16 +86,19 @@ function BenefitCard({
 }
 
 function getAmountParts(description: string) {
-  const amountMatch = description.match(/^(.+?)\s*([\d,]+)\s*(.*)$/)
+  const amountMatch = description.match(/[\d,]+/)
 
   if (!amountMatch) {
     return null
   }
 
+  const amountStart = amountMatch.index ?? 0
+  const amountEnd = amountStart + amountMatch[0].length
+
   return {
-    prefix: amountMatch[1].trim(),
-    value: amountMatch[2].trim(),
-    suffix: amountMatch[3].trim(),
+    prefix: description.slice(0, amountStart).trim(),
+    value: amountMatch[0].trim(),
+    suffix: description.slice(amountEnd).trim(),
   }
 }
 

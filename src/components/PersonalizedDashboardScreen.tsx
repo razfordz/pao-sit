@@ -68,7 +68,7 @@ function groupBenefitsByCategory(
 ): DashboardCategoryData[] {
   const benefitsByCategory = new Map<string, DashboardBenefit[]>()
 
-  matchedBenefits.map((benefit) => {
+  matchedBenefits.forEach((benefit) => {
     const categoryBenefits = benefitsByCategory.get(benefit.category) ?? []
 
     benefitsByCategory.set(benefit.category, [
@@ -107,6 +107,13 @@ function toDashboardBenefit(
 function getPersonalReason(
   benefit: MatchedBenefit<(typeof benefits)[number]>,
 ) {
+  if (
+    benefit.tags.includes("elderly") ||
+    benefit.tags.includes("seniorCitizen")
+  ) {
+    return "AI พบว่าสิทธิ์นี้เหมาะกับช่วงวัยผู้สูงอายุและช่วยดูแลค่าใช้จ่ายประจำวัน"
+  }
+
   if (benefit.tags.includes("hasChild") && benefit.tags.includes("lowIncome")) {
     return "เหมาะกับผู้ปกครองที่กำลังมีภาระค่าใช้จ่ายในครอบครัว"
   }
@@ -123,12 +130,28 @@ function getPersonalReason(
     return "AI พบว่าสิทธิ์นี้อาจช่วยคุณในช่วงกำลังหางาน"
   }
 
-  if (benefit.tags.includes("healthSupport")) {
-    return "สิทธิ์นี้อาจช่วยให้การดูแลสุขภาพของคุณง่ายขึ้น"
+  if (
+    benefit.tags.includes("incomeSupport") ||
+    benefit.tags.includes("financialSupport") ||
+    benefit.tags.includes("lowIncome")
+  ) {
+    return "AI พบว่าสิทธิ์นี้ช่วยลดภาระค่าครองชีพและเสริมความมั่นคงทางการเงิน"
   }
 
-  if (benefit.tags.includes("elderly")) {
-    return "คุณอาจเข้าเกณฑ์รับการดูแลที่ช่วยให้ชีวิตประจำวันสบายขึ้น"
+  if (benefit.tags.includes("socialSecurity")) {
+    return "AI พบว่าสิทธิ์นี้เกี่ยวข้องกับสถานะผู้ประกันตนของคุณ"
+  }
+
+  if (benefit.tags.includes("transportSupport")) {
+    return "AI พบว่าสิทธิ์นี้อาจช่วยลดค่าเดินทางและค่าใช้จ่ายประจำวัน"
+  }
+
+  if (benefit.tags.includes("disabled")) {
+    return "AI พบว่าสิทธิ์นี้อาจช่วยสนับสนุนการใช้ชีวิตประจำวันของผู้พิการ"
+  }
+
+  if (benefit.tags.includes("healthSupport")) {
+    return "สิทธิ์นี้อาจช่วยให้การดูแลสุขภาพของคุณง่ายขึ้น"
   }
 
   return "AI พบว่าสิทธิ์นี้อาจช่วยคุณได้ในสถานการณ์ตอนนี้"
@@ -138,7 +161,7 @@ function EmptyMatchedBenefits() {
   return (
     <div className="relative z-10 mt-11 rounded-[28px] border border-white/84 bg-white/68 p-6 text-center shadow-[0_18px_42px_rgba(18,59,59,0.08)] backdrop-blur-xl">
       <p className="headline-font text-[21px] font-extrabold leading-tight text-[#123B3B]">
-        ยังไม่พบสิทธิ์ที่ตรงกับโปรไฟล์นี้
+        ขณะนี้ยังไม่พบสิทธิ์ที่ตรงกับข้อมูลของคุณ
       </p>
       <p className="mt-3 text-[13.5px] font-bold leading-[1.65] text-[#5D7778]">
         ลองเพิ่มข้อมูลเพิ่มเติมเพื่อให้ AI แนะนำได้แม่นยำขึ้น

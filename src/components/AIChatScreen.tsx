@@ -2,7 +2,10 @@ import { useEffect, useState } from "react"
 import AIAssistantMascot from "./AIAssistantMascot"
 import AIProcessingScreen from "./AIProcessingScreen"
 import ChatBubble from "./ChatBubble"
+import ChatInput from "./ChatInput"
 import TypingIndicator from "./TypingIndicator"
+import { userProfile } from "../data/userProfile"
+import { getDistrictOfficeByDistrict } from "../lib/getDistrictOffice"
 
 type ChatMessage = {
   id: string
@@ -15,8 +18,10 @@ const aiResponseDelay = 1500
 const firstAiResponseDelay = 700
 const processingTransitionDelay = 1500
 const userMessageDelay = 1300
+const districtConfirmationDelay = 900
+const followUpStartDelay = 1300
 
-const conversation: ChatMessage[] = [
+const introConversation: ChatMessage[] = [
   {
     id: "greeting",
     speaker: "ai",
@@ -27,6 +32,14 @@ const conversation: ChatMessage[] = [
     speaker: "ai",
     text: "เพื่อช่วยค้นหาสิทธิ์และโอกาสที่เหมาะกับคุณ ขอถามข้อมูลเพิ่มเติมนิดหน่อยครับ",
   },
+  {
+    id: "district-question",
+    speaker: "ai",
+    text: "ที่พักของคุณอยู่เขตไหนในกรุงเทพครับ?",
+  },
+]
+
+const followUpConversation: ChatMessage[] = [
   {
     id: "work-question",
     speaker: "ai",
@@ -54,18 +67,28 @@ const conversation: ChatMessage[] = [
   },
 ]
 
+type ChatPhase = "intro" | "district" | "district-confirmation" | "follow-up"
+
 function AIChatScreen() {
+  const [chatPhase, setChatPhase] = useState<ChatPhase>("intro")
   const [messageIndex, setMessageIndex] = useState(0)
   const [visibleMessages, setVisibleMessages] = useState<ChatMessage[]>([])
   const [isTyping, setIsTyping] = useState(false)
+  const [districtInput, setDistrictInput] = useState("")
   const [showProcessing, setShowProcessing] = useState(false)
+  const currentConversation =
+    chatPhase === "follow-up" ? followUpConversation : introConversation
 
   useEffect(() => {
-    if (messageIndex >= conversation.length) {
+    if (chatPhase !== "intro" && chatPhase !== "follow-up") {
       return
     }
 
-    const nextMessage = conversation[messageIndex]
+    if (messageIndex >= currentConversation.length) {
+      return
+    }
+
+    const nextMessage = currentConversation[messageIndex]
     const timer = window.setTimeout(
       () => {
         if (nextMessage.speaker === "ai" && !isTyping) {
@@ -74,19 +97,26 @@ function AIChatScreen() {
         }
 
         setVisibleMessages((messages) => [...messages, nextMessage])
-        setMessageIndex((index) => index + 1)
+        if (
+          chatPhase === "intro" &&
+          messageIndex === currentConversation.length - 1
+        ) {
+          setChatPhase("district")
+        } else {
+          setMessageIndex((index) => index + 1)
+        }
         setIsTyping(false)
       },
       getMessageDelay(nextMessage, messageIndex, isTyping),
     )
 
     return () => window.clearTimeout(timer)
-  }, [isTyping, messageIndex])
+  }, [chatPhase, currentConversation, isTyping, messageIndex])
 
   useEffect(() => {
     const hasCompletedConversation =
-      messageIndex >= conversation.length &&
-      visibleMessages.length === conversation.length &&
+      chatPhase === "follow-up" &&
+      messageIndex >= followUpConversation.length &&
       !isTyping
 
     if (!hasCompletedConversation || showProcessing) {
@@ -98,7 +128,63 @@ function AIChatScreen() {
     }, processingTransitionDelay)
 
     return () => window.clearTimeout(processingTimer)
-  }, [isTyping, messageIndex, showProcessing, visibleMessages.length])
+  }, [chatPhase, isTyping, messageIndex, showProcessing])
+
+  const submitDistrict = () => {
+    const submittedDistrict = districtInput.trim()
+
+    if (!submittedDistrict || chatPhase !== "district") {
+      return
+    }
+
+    const matchedOffice = getDistrictOfficeByDistrict(
+      normalizeDistrictInput(submittedDistrict),
+    )
+
+    setDistrictInput("")
+    setVisibleMessages((messages) => [
+      ...messages,
+      {
+        id: `district-answer-${Date.now()}`,
+        speaker: "user",
+        text: submittedDistrict,
+      },
+    ])
+    setIsTyping(true)
+
+    window.setTimeout(() => {
+      if (!matchedOffice) {
+        setVisibleMessages((messages) => [
+          ...messages,
+          {
+            id: `district-error-${Date.now()}`,
+            speaker: "ai",
+            text: "ยังไม่พบเขตนี้ในระบบ ลองพิมพ์ชื่อเขตอีกครั้งได้ไหมครับ",
+          },
+        ])
+        setIsTyping(false)
+        return
+      }
+
+      userProfile.district = matchedOffice.district
+      userProfile.location = `เขต${matchedOffice.district} กรุงเทพมหานคร`
+      setChatPhase("district-confirmation")
+      setVisibleMessages((messages) => [
+        ...messages,
+        {
+          id: `district-confirmation-${Date.now()}`,
+          speaker: "ai",
+          text: `ขอบคุณครับ ผมจะใช้เขต${matchedOffice.district}เพื่อแนะนำสำนักงานเขตและช่องทางสมัครที่ใกล้คุณที่สุด`,
+        },
+      ])
+      setIsTyping(false)
+
+      window.setTimeout(() => {
+        setMessageIndex(0)
+        setChatPhase("follow-up")
+      }, followUpStartDelay)
+    }, districtConfirmationDelay)
+  }
 
   if (showProcessing) {
     return <AIProcessingScreen />
@@ -143,8 +229,28 @@ function AIChatScreen() {
           <TypingIndicator className="animate-[chat-in_360ms_ease-out_both]" />
         )}
       </div>
+
+      {chatPhase === "district" && (
+        <div className="relative z-10 mt-3">
+          <ChatInput
+            disabled={isTyping}
+            onChange={setDistrictInput}
+            onSubmit={submitDistrict}
+            value={districtInput}
+          />
+        </div>
+      )}
     </div>
   )
+}
+
+function normalizeDistrictInput(district: string) {
+  return district
+    .replace(/^เขต/, "")
+    .replace(/กรุงเทพมหานคร/g, "")
+    .replace(/กรุงเทพฯ/g, "")
+    .replace(/กรุงเทพ/g, "")
+    .trim()
 }
 
 function getMessageDelay(
