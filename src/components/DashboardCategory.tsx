@@ -7,10 +7,12 @@ export type DashboardBenefit = {
   thumbnail: string
   matchScore?: number
   reason?: string
+  recommendationReason?: string
   shortDescription?: string
   eligibility?: string[]
   requiredDocuments?: string[]
   agency?: string
+  sourceUrl?: string
   nextStep?: string
 }
 
@@ -45,7 +47,7 @@ function DashboardCategory({
             thumbnail={benefit.thumbnail}
             thumbnailAlt={benefit.title}
             matchScore={benefit.matchScore}
-            reason={benefit.reason}
+            reason={benefit.recommendationReason ?? benefit.reason}
             onSelect={() => onSelectBenefit?.(benefit)}
           />
         ))}

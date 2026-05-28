@@ -1,43 +1,17 @@
 import { useState } from "react"
 import BenefitApplicationFlowScreen from "./BenefitApplicationFlowScreen"
 import type { DashboardBenefit } from "./DashboardCategory"
+import { userProfile } from "../data/userProfile"
 
 type BenefitDetailScreenProps = {
   benefit: DashboardBenefit
   onBack: () => void
 }
 
-const profileSignals = [
-  "อายุ 28 ปี",
-  "เพิ่งตกงาน",
-  "มีลูก 1 คน",
-  "อยู่กรุงเทพ",
-  "กำลังหางานใหม่",
-]
-
-const fallbackEligibility = [
-  "มีเด็กในครอบครัว",
-  "กำลังมีภาระค่าใช้จ่าย",
-  "อาศัยอยู่ในประเทศไทย",
-]
-
-const fallbackDocuments = [
-  "บัตรประชาชน",
-  "ทะเบียนบ้าน",
-  "สมุดบัญชีธนาคาร",
-]
-
 function BenefitDetailScreen({ benefit, onBack }: BenefitDetailScreenProps) {
-  const eligibility = getCompactItems(
-    benefit.eligibility,
-    fallbackEligibility,
-    3,
-  )
-  const documents = getCompactItems(
-    benefit.requiredDocuments,
-    fallbackDocuments,
-    6,
-  )
+  const eligibility = benefit.eligibility ?? []
+  const documents = benefit.requiredDocuments ?? []
+  const profileSignals = getProfileSignals()
   const [checkedDocuments, setCheckedDocuments] = useState<string[]>([])
   const [previewDocument, setPreviewDocument] = useState<string | null>(null)
   const [showApplicationFlow, setShowApplicationFlow] = useState(false)
@@ -140,9 +114,10 @@ function BenefitDetailScreen({ benefit, onBack }: BenefitDetailScreenProps) {
             ทำไม AI ถึงแนะนำสิทธิ์นี้
           </h2>
           <p className="mt-3 text-[13.5px] font-medium leading-[1.72] text-[#496B6D]">
-            จากข้อมูลของคุณ AI พบว่าคุณอาจมีภาระค่าใช้จ่ายในการดูแลครอบครัว
-            และอยู่ในช่วงกำลังหางานใหม่ สิทธิ์นี้จึงอาจช่วยลดภาระเฉพาะหน้า
-            และทำให้คุณมีเวลาตั้งหลักได้มากขึ้น
+            {benefit.reason}
+            {benefit.shortDescription && (
+              <span className="mt-2 block">{benefit.shortDescription}</span>
+            )}
           </p>
         </section>
 
@@ -153,9 +128,13 @@ function BenefitDetailScreen({ benefit, onBack }: BenefitDetailScreenProps) {
           />
 
           <div className="mt-4 flex flex-col gap-2.5">
-            {eligibility.map((item) => (
-              <ChecklistItem key={item}>{item}</ChecklistItem>
-            ))}
+            {eligibility.length > 0 ? (
+              eligibility.map((item) => (
+                <ChecklistItem key={item}>{item}</ChecklistItem>
+              ))
+            ) : (
+              <EmptyInfoMessage>ยังไม่มีข้อมูลคุณสมบัติสำหรับสิทธิ์นี้</EmptyInfoMessage>
+            )}
           </div>
         </section>
 
@@ -169,7 +148,7 @@ function BenefitDetailScreen({ benefit, onBack }: BenefitDetailScreenProps) {
             <div className="flex items-center justify-between gap-3">
               <p className="text-[12px] font-extrabold leading-none text-[#126F6C]">
                 {isDocumentReady
-                  ? "พร้อมสมัครแล้ว 🎉"
+                  ? "เตรียมเอกสารครบแล้ว 🎉"
                   : `เตรียมแล้ว ${preparedCount} จาก ${documents.length} รายการ`}
               </p>
               <span
@@ -200,15 +179,19 @@ function BenefitDetailScreen({ benefit, onBack }: BenefitDetailScreenProps) {
           </div>
 
           <div className="mt-4 flex flex-col gap-3">
-            {documents.map((document) => (
-              <DocumentChecklistItem
-                key={document}
-                document={document}
-                isChecked={checkedDocuments.includes(document)}
-                onPreview={() => setPreviewDocument(document)}
-                onToggle={() => toggleDocument(document)}
-              />
-            ))}
+            {documents.length > 0 ? (
+              documents.map((document) => (
+                <DocumentChecklistItem
+                  key={document}
+                  document={document}
+                  isChecked={checkedDocuments.includes(document)}
+                  onPreview={() => setPreviewDocument(document)}
+                  onToggle={() => toggleDocument(document)}
+                />
+              ))
+            ) : (
+              <EmptyInfoMessage>ยังไม่มีข้อมูลเอกสารสำหรับสิทธิ์นี้</EmptyInfoMessage>
+            )}
           </div>
         </section>
 
@@ -249,6 +232,16 @@ function BenefitDetailScreen({ benefit, onBack }: BenefitDetailScreenProps) {
             <p className="mt-3 text-center text-[11.5px] font-bold leading-snug text-[#6E8788]">
               หน่วยงานดูแล: {benefit.agency}
             </p>
+          )}
+          {benefit.sourceUrl && (
+            <a
+              href={benefit.sourceUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="mt-3 block text-center text-[11.5px] font-bold leading-snug text-[#12877F] underline decoration-[#9BDCD7] underline-offset-4"
+            >
+              ดูแหล่งข้อมูลสิทธิ์นี้
+            </a>
           )}
         </section>
       </div>
@@ -454,6 +447,14 @@ function SectionHeader({
   )
 }
 
+function EmptyInfoMessage({ children }: { children: string }) {
+  return (
+    <div className="rounded-[18px] border border-[#E0F3F2] bg-[#F8FFFF]/86 p-3 text-[12.8px] font-bold leading-[1.55] text-[#5F7A7C] shadow-[inset_0_1px_0_rgba(255,255,255,0.9)]">
+      {children}
+    </div>
+  )
+}
+
 function ChecklistItem({ children }: { children: string }) {
   return (
     <div className="flex items-start gap-3 rounded-[18px] border border-[#E0F3F2] bg-[#F8FFFF]/86 p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.9)]">
@@ -519,16 +520,6 @@ function AmountDisplay({
   )
 }
 
-function getCompactItems(
-  items: string[] | undefined,
-  fallback: string[],
-  maxItems: number,
-) {
-  const source = items && items.length > 0 ? items : fallback
-
-  return source.slice(0, maxItems)
-}
-
 function getAmountParts(description: string) {
   const amountMatch = description.match(/[\d,]+/)
 
@@ -544,6 +535,40 @@ function getAmountParts(description: string) {
     value: amountMatch[0].trim(),
     suffix: description.slice(amountEnd).trim(),
   }
+}
+
+function getProfileSignals() {
+  const signals: string[] = []
+
+  if (userProfile.age) {
+    signals.push(`อายุ ${userProfile.age} ปี`)
+  }
+
+  if (userProfile.lowIncome) {
+    signals.push("รายได้น้อย")
+  }
+
+  if (userProfile.employmentStatus === "unemployed") {
+    signals.push("กำลังว่างงาน")
+  }
+
+  if (userProfile.socialSecurity) {
+    signals.push("มีประกันสังคม")
+  }
+
+  if (userProfile.hasChild || userProfile.childCount) {
+    signals.push(`มีบุตร ${userProfile.childCount ?? 1} คน`)
+  }
+
+  if (userProfile.isLookingForJob) {
+    signals.push("กำลังหางานใหม่")
+  }
+
+  if (userProfile.district) {
+    signals.push(`อยู่เขต${userProfile.district}`)
+  }
+
+  return signals.length > 0 ? signals : ["ข้อมูลโปรไฟล์ยังไม่ครบ"]
 }
 
 export default BenefitDetailScreen

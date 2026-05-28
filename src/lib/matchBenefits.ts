@@ -81,14 +81,12 @@ const secondaryTagMatchers: Record<
   financialSupport: (profile) =>
     profile.financialCrisis === true ||
     profile.lowIncome === true ||
-    profile.employmentStatus === "unemployed" ||
     Boolean(profile.hasChild || profile.childCount),
   healthSupport: (profile) => profile.healthSupport === true,
   lowIncome: (profile) => profile.lowIncome === true,
   transportSupport: (profile) =>
     Boolean(profile.age && profile.age >= 60) ||
-    profile.disabled === true ||
-    profile.lowIncome === true,
+    profile.disabled === true,
   worker: (profile) =>
     profile.socialSecurity === true || profile.employmentStatus === "employed",
   disabled: (profile) => profile.disabled === true,

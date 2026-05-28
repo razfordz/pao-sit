@@ -93,13 +93,15 @@ function toDashboardBenefit(
     id: benefit.id,
     title: benefit.title,
     description: benefit.amountSummary ?? "เหมาะกับโปรไฟล์ของคุณ",
-    reason: getPersonalReason(benefit),
+    reason: benefit.reason,
+    recommendationReason: getPersonalReason(benefit),
     matchScore: benefit.matchScore,
     thumbnail: benefit.thumbnail ?? `/images/benefits/${benefit.id}.png`,
     shortDescription: benefit.shortDescription,
     eligibility: benefit.eligibility,
     requiredDocuments: benefit.requiredDocuments,
     agency: benefit.agency,
+    sourceUrl: benefit.sourceUrl,
     nextStep: benefit.nextStep,
   }
 }

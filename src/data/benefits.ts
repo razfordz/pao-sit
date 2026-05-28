@@ -157,6 +157,33 @@ export const benefits: Benefit[] = [
     nextStep: "ตรวจสอบรอบลงทะเบียนและเอกสารที่ต้องใช้ผ่านช่องทางของกระทรวงการคลัง",
   },
   {
+    id: "elderly-transport-discount",
+    title: "สิทธิลดหย่อนค่าโดยสารสำหรับผู้สูงอายุ",
+    category: "สวัสดิการ",
+    subCategory: "การเดินทางและการใช้ชีวิตประจำวัน",
+    amountSummary: "ลดหย่อนค่าโดยสาร",
+    shortDescription:
+      "สิทธิช่วยลดภาระค่าเดินทางสำหรับผู้สูงอายุ เพื่อให้เข้าถึงบริการสาธารณะและการเดินทางในเมืองได้ง่ายขึ้น",
+    eligibility: [
+      "มีสัญชาติไทย",
+      "อายุ 60 ปีขึ้นไป",
+      "แสดงบัตรประชาชนหรือบัตรผู้สูงอายุตามเงื่อนไขของผู้ให้บริการ",
+    ],
+    requiredDocuments: [
+      "บัตรประชาชน",
+      "บัตรผู้สูงอายุ ถ้ามี",
+    ],
+    agency: "หน่วยงานขนส่งสาธารณะ / กรุงเทพมหานคร",
+    sourceUrl: "https://www.bangkok.go.th/",
+    tags: ["seniorCitizen", "transportSupport"],
+    lifeEvents: ["seniorCitizen", "dailyCommute"],
+    targetUsers: ["seniorCitizen", "publicTransportUser"],
+    priority: "medium",
+    reason:
+      "เหมาะกับผู้สูงอายุที่ต้องเดินทางในเมืองและต้องการลดภาระค่าเดินทางประจำวัน",
+    nextStep: "ตรวจสอบเงื่อนไขส่วนลดของผู้ให้บริการขนส่ง และเตรียมบัตรประชาชนหรือบัตรผู้สูงอายุไว้แสดงสิทธิ์",
+  },
+  {
     id: "social-security-unemployment",
     title: "สิทธิประกันสังคม กรณีว่างงาน",
     category: "โอกาส",

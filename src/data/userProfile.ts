@@ -1,4 +1,6 @@
-export const userProfile = {
+import type { UserProfile } from "../lib/matchBenefits"
+
+export const userProfile: UserProfile = {
   age: 28,
   location: "เขตปทุมวัน กรุงเทพมหานคร",
   district: "ปทุมวัน",

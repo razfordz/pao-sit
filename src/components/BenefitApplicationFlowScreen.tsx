@@ -39,41 +39,52 @@ type ApplicationChannel = {
   readyText: string
   recommended: boolean
   mapsUrl?: string
+  sourceUrl?: string
 }
 
-const onlineApplicationChannel: ApplicationChannel = {
-  action: "online",
-  title: "สมัครออนไลน์",
-  description: "เหมาะสำหรับสมัครทันทีผ่านเว็บไซต์",
-  detail: "เริ่มได้ทันที",
-  loadingText: "กำลังเปิดช่องทางสมัครออนไลน์...",
-  readyText: "พร้อมเปิดเว็บไซต์สมัครออนไลน์",
-  recommended: true,
+function getOnlineApplicationChannel(benefit: DashboardBenefit): ApplicationChannel {
+  return {
+    action: "online",
+    title: "สมัครออนไลน์",
+    description: benefit.sourceUrl
+      ? `เริ่มจากแหล่งข้อมูลของ${benefit.agency ?? "หน่วยงานที่ดูแล"}`
+      : "เริ่มตรวจสอบช่องทางออนไลน์ที่เกี่ยวข้องกับสิทธิ์นี้",
+    detail: benefit.agency ?? "ตรวจสอบหน่วยงานที่ดูแล",
+    loadingText: `กำลังเตรียมช่องทางสมัครสำหรับ${benefit.title}...`,
+    readyText: benefit.sourceUrl
+      ? "พร้อมเปิดแหล่งข้อมูลสิทธิ์นี้"
+      : "ยังไม่มีลิงก์แหล่งข้อมูลสำหรับสิทธิ์นี้",
+    recommended: true,
+    sourceUrl: benefit.sourceUrl,
+  }
 }
 
-function getApplicationSteps(officeName: string) {
+function getApplicationSteps(benefit: DashboardBenefit, officeName: string) {
   return [
     {
-      title: `ไปที่${officeName}`,
-      description: `AI พบว่าสำนักงานเขตใกล้คุณคือ${officeName}`,
-    },
-    {
-      title: "ยื่นเอกสารให้เจ้าหน้าที่ตรวจสอบ",
+      title: `ตรวจข้อมูลสิทธิ์ ${benefit.title}`,
       description:
-        "แจ้งชื่อสิทธิ์นี้ แล้วให้เจ้าหน้าที่ช่วยตรวจเอกสารที่เตรียมไว้",
+        benefit.nextStep ??
+        "AI แนะนำให้ตรวจเงื่อนไขและช่องทางสมัครของสิทธิ์นี้ก่อนดำเนินการ",
     },
     {
-      title: "รอผลการพิจารณา",
-      description: "ติดตามผลผ่าน SMS หรือช่องทางที่เจ้าหน้าที่แจ้งไว้",
+      title: `ติดต่อ${benefit.agency ?? officeName}`,
+      description: `ใช้เอกสารที่เตรียมไว้ และแจ้งเจ้าหน้าที่ว่าต้องการสมัคร${benefit.title}`,
+    },
+    {
+      title: "ติดตามผลการสมัคร",
+      description:
+        "ติดตามผลผ่านช่องทางที่หน่วยงานแจ้งไว้ และเก็บหลักฐานการยื่นสมัครไว้ตรวจสอบภายหลัง",
     },
   ]
 }
 
 function getApplicationChannels(
+  benefit: DashboardBenefit,
   districtOffice: OfficeDisplayData,
 ): ApplicationChannel[] {
   return [
-    onlineApplicationChannel,
+    getOnlineApplicationChannel(benefit),
     {
       action: "office",
       title: districtOffice.name,
@@ -121,9 +132,10 @@ function BenefitApplicationFlowScreen({
   const districtOffice: OfficeDisplayData =
     matchedDistrictOffice ?? defaultDistrictOffice
   const applicationSteps = getApplicationSteps(
+    benefit,
     matchedDistrictOffice ? districtOffice.name : "สำนักงานเขตที่เหมาะสม",
   )
-  const applicationChannels = getApplicationChannels(districtOffice)
+  const applicationChannels = getApplicationChannels(benefit, districtOffice)
   const smartTips = getSmartTips(districtOffice)
   const [isChannelSheetOpen, setIsChannelSheetOpen] = useState(false)
   const [isOfficeDetailOpen, setIsOfficeDetailOpen] = useState(false)
@@ -184,6 +196,10 @@ function BenefitApplicationFlowScreen({
       })
       setChannelStatus("ready")
       return
+    }
+
+    if (channel.action === "online" && channel.sourceUrl) {
+      window.open(channel.sourceUrl, "_blank", "noopener,noreferrer")
     }
 
     setChannelStatus("loading")
@@ -373,7 +389,7 @@ function BenefitApplicationFlowScreen({
 
             <div className="mt-4 rounded-[18px] border border-white/14 bg-white/10 p-3 backdrop-blur-xl">
               <p className="text-[12px] font-bold leading-[1.55] text-white/72">
-                แนะนำ: เริ่มออนไลน์ก่อน แล้วไปสำนักงานเขตเฉพาะกรณีที่ต้องยื่นเอกสารตัวจริง
+                แนะนำ: {benefit.nextStep ?? "เริ่มตรวจสอบช่องทางสมัครออนไลน์ก่อน แล้วติดต่อหน่วยงานหากต้องยื่นเอกสารตัวจริง"}
               </p>
             </div>
 
@@ -388,6 +404,11 @@ function BenefitApplicationFlowScreen({
             {benefit.agency && (
               <p className="mt-3 text-center text-[11.5px] font-bold leading-snug text-white/58">
                 หน่วยงานดูแล: {benefit.agency}
+              </p>
+            )}
+            {benefit.sourceUrl && (
+              <p className="mt-2 text-center text-[11.5px] font-bold leading-snug text-white/58">
+                แหล่งข้อมูล: {benefit.sourceUrl}
               </p>
             )}
           </div>
